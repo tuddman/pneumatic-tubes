@@ -11,8 +11,13 @@ I think this is a very intuitive way of building real time features in your re-f
 
 So, the idea of pneumatic-tubes:
 * Define handlers for some of your re-frame events on server.
-* Dispatch particular events to server via a WebSocket connection.
-* Dispatch any other re-frame events from server to one or more clients
+* Dispatch events to server via a WebSocket connection channel.
+* Dispatch any other re-frame events from server to one or more client
+* Server-side event handler can associate data with the client's tube
+* A predicate can be used to select channels for dispatching an event to the selected clients
+
+I call one WebSocket channel - a tube, because of the idea that you can put your labels
+on it and then select tubes using labels for dispatching events to clients.
 
 ## Usage
 
@@ -38,6 +43,34 @@ So, the idea of pneumatic-tubes:
 
 (run-server handler {:port 9090})
 ```
+#### Server side event handler
+The event handler on server has same signature as in re-frame app.
+```clojure
+(fn [source-tube [event-name param1 param2 ....]]
+
+    (event-handling-logic)
+
+    (-> source-tube
+        (assoc :my-label "value")))
+```
+The important difference is that instead of app-db you are getting a data map associated with
+the source tube of the event. This data is something like a 'label' placed on the 'tube'.
+Event handler must return the new data from the event, it will be associated with the tube.
+
+This 'label' data intended to be used for filtering tubes when you dispatching events to multiple clients.
+
+#### Dispatching server events to clients
+In your server side code you can dispatch (push) events to your client apps using `dispatch` function.
+```clojure
+(dispatch transmitter target-tube [:my-event with paramaters])
+```
+It takes more parameters than dispatch in re-rfame mainly because you need to specify the destination.
+
+Destination is specified in 2nd parameter, you can use:
+1. keyword :all to send event to all conneced clients
+1. a map containing entry key :tube/id (like 1st param of event handler), to dispatch to a single tube
+1. a predicate function of 'label' data which will be used as filtering criteria for target tubes
+
 ### Client
 
 ```clojure
@@ -67,6 +100,12 @@ So, the idea of pneumatic-tubes:
 
 (tubes/create! tube)
 ```
+
+## What to do next
+* Add tests
+* More complex example with dispaching using predicate fn
+* Error handling, reconnecting
+* Example with some clustering solution
 
 ## License
 
