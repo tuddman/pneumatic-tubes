@@ -67,7 +67,8 @@ In your server side code you can dispatch (push) events to your client apps usin
 It takes more parameters than dispatch in re-rfame mainly because you need to specify the destination.
 
 Destination is specified in 2nd parameter, you can use:
-1. keyword :all to send event to all conneced clients
+
+1. keyword :all to send event to all connected clients
 1. a map containing entry key :tube/id (like 1st param of event handler), to dispatch to a single tube
 1. a predicate function of 'label' data which will be used as filtering criteria for target tubes
 
