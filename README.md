@@ -5,19 +5,18 @@ WebSocket based transport of events between re-frame app and server
 ## Why
 
 While it is quite easy to [talk to servers](https://github.com/Day8/re-frame/wiki/Talking-To-Servers)
-in a re-frame app, what if you could just throw `[:your-event data]` from client directly to server,
+in a re-frame app, imagine if you could just throw `[:your-event data]` from client directly to server,
 process it, and dispatch one or more `[:server-side-event with data]` back to one or more client re-frame apps?
 I think this is a very intuitive way of building real time features in your re-frame app.
 
 So, the idea of pneumatic-tubes:
 * Define handlers for some of your re-frame events on server.
 * Dispatch events to server via a WebSocket connection channel.
-* Dispatch any other re-frame events from server to one or more client
-* Server-side event handler can associate data with the client's tube
-* A predicate can be used to select channels for dispatching an event to the selected clients
+* Dispatch events from server to one or more clients.
+* Mark WebSocket channels with some 'label' data, and use it for selective dispatching events to multiple clients
 
 I call one WebSocket channel - a tube, because of the idea that you can put your labels
-on it and then select tubes using labels for dispatching events to clients.
+on it and then select tubes using is labels for dispatching events to clients.
 
 ## Usage
 
@@ -72,11 +71,16 @@ Destination is specified in 2nd parameter, you can use:
 1. a map containing entry key :tube/id (like 1st param of event handler), to dispatch to a single tube
 1. a predicate function of 'label' data which will be used as filtering criteria for target tubes
 
+#### Purpose of transmitter
+The intention of having more transmitter is to be able implementing some clustering strategy of your choice.
+You can add an 'on-send' hook to the transmitter, and broadcast the event to some other destinations (like to other nodes of cluster)
+Read more about that in Clustering section of this README
+
 ### Client
 
 ```clojure
-  (:require [re-frame.core :as re-frame]
-            [pneumatic-tubes.core :as tubes]
+(:require [re-frame.core :as re-frame]
+          [pneumatic-tubes.core :as tubes]
 
 (defn on-receive [event-v]                                        ;; handler of incoming events from server
   (.log js/console "received from server:" (str event-v))
@@ -101,6 +105,51 @@ Destination is specified in 2nd parameter, you can use:
 
 (tubes/create! tube)
 ```
+
+#### The tube on client
+A WebSocket channel (which I call 'tube') in client app is specified like this:
+```clojure
+(def tube (tubes/tube (str "ws://localhost:9090/ws") #(re-frame/dispatch %))
+```
+No connection is done at this moment - this is only defines the url and the on-receive handler.
+Once the tube is defined you can create or destroy it at some point.
+
+As pneumatic-tubes has no dependency on re-frame (just influenced by it)
+so at minimum your on-receive handler should just dispatch a re-frame event line in example above.
+
+To make a real WebSocket connection:
+```clojure
+ (tubes/create! tube)
+```
+You can pass additional parameters (like a web token) like this:
+```clojure
+ (tubes/create! tube {:token "abc"})
+```
+This will establish WS connection using url: `ws://localhost:9090/ws?token=abc`.
+When tube is created, event `:tube/on-create` will be published on server.
+
+To destroy the tube at any time call:
+```clojure
+ (tubes/destroy! tube)
+```
+Event `:tube/on-destroy` will be published on server.
+
+#### Dispatching events to server
+To dispatch event at any point use:
+```clojure
+ (tubes/dispatch tube [:server-side-event with data])
+```
+In case you want just forward some re-frame app event to server you can use a middleware:
+```
+(def send-to-server (tubes/send-to-tube-middleware tube))
+
+(re-frame/register-handler
+  :some-event
+  send-to-server
+  (fn [db [_ name]]
+    (do-some-optimistic-logic-with db)))
+```
+The same event will be sent to server right after the re-frame handler is finished.
 
 ## What to do next
 * Add tests
