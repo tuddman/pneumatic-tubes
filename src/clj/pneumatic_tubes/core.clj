@@ -102,9 +102,9 @@
 
 (defn dispatch
   "Send event vector to one or more tubes.
-  Destination (parameter 'to') can a map, a predicate function or :all keyword "
+  Destination (parameter 'to') can be a map, a predicate function or :all keyword "
   ([transmitter to event-v]
-   (>!! (:out-queue transmitter) {:to to :event event-v})))
+   (>!! (:out-queue transmitter) {:to to :event event-v}) to))
 
 (defn- send-to-tube [tube-registry tube-id event-v]
   (let [send! (get-in tube-registry [:send-fns tube-id])]
