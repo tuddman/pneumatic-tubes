@@ -1,7 +1,8 @@
 (ns pneumatic-tubes.core
   (:require-macros [cljs.core.async.macros :refer [go-loop]])
   (:require [cljs.core.async :refer [close! chan <! put!]]
-            [cljs.reader :as reader]))
+            [cljs.reader :as reader]
+            [clojure.string :as str]))
 
 (def ^:private sockets (atom {}))
 
@@ -31,7 +32,7 @@
   ([tube]
    (create! tube nil))
   ([tube params]
-   (let [param-str (clojure.string/join "&" (for [[k v] params] (str (name k) "=" v)))
+   (let [param-str (str/join "&" (for [[k v] params] (str (name k) "=" v)))
          {base-url :url rcv-fn :on-receive} tube
          url (if (empty? param-str) base-url (str base-url "?" param-str))]
      (.log js/console "Creating tube on " url)
