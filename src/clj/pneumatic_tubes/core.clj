@@ -31,7 +31,7 @@
   "Registers a new tube in a global registry,
   the send-fn is a function which sends a message via implementation-specific channel like a WebSocket"
   ([send-fn]
-   (add-tube! send-fn nil))
+   (add-tube! send-fn {}))
   ([send-fn client-data]
    (let [tube-id (java.util.UUID/randomUUID)]
      (swap! tube-registry #(add-tube % tube-id send-fn client-data))
@@ -70,7 +70,8 @@
       (error "pneumatic-tubes: no event handler registered for: \"" event-id "\". Ignoring.")
       (try
         (assoc-tube-data! tube-id (handler-fn from event-v))
-        (catch Exception e (error "pneumatic-tubes: Event handler: \"" event-id "\" thrown an exception." e))))))
+        (catch Exception e (error "pneumatic-tubes: Exception while processing event:"
+                                  event-v "received from tube" from e))))))
 
 (def ^:private noop-handlers {:tube/on-create  (fn [_ _])
                               :tube/on-destroy (fn [_ _])})
