@@ -12,10 +12,11 @@
 (defn- assoc-tube-data
   "Associate data with the tube on server side, this data can be used to select particular tubes for sending data"
   [registry tube-id new-data]
-  (when-not (nil? new-data)
-    (if (map? new-data)
-      (assoc-in registry [:tubes tube-id] (merge {:tube/id tube-id} new-data))
-      (error "pneumatic-tubes: Expected map containing new tube data, but got something else. Tube data was not changed"))))
+  (if (map? new-data)
+    (assoc-in registry [:tubes tube-id] (merge {:tube/id tube-id} new-data))
+    (do
+      (error "pneumatic-tubes: Expected map containing new tube data, but got " new-data " . Tube data was not changed")
+      registry)))
 
 (defn- add-tube [registry tube-id send-fn initial-data]
   (-> registry
@@ -73,8 +74,9 @@
         (catch Exception e (error "pneumatic-tubes: Exception while processing event:"
                                   event-v "received from tube" from e))))))
 
-(def ^:private noop-handlers {:tube/on-create  (fn [_ _])
-                              :tube/on-destroy (fn [_ _])})
+(defn- noop-handler [tube _] tube)
+(def ^:private noop-handlers {:tube/on-create  noop-handler
+                              :tube/on-destroy noop-handler})
 
 (defn receiver
   "Receiver processes all the messages coming to him using the provided handler map.
