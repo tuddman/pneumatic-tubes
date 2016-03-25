@@ -101,6 +101,15 @@
   ([receiver from event-v]
    (>!! (:in-queue receiver) {:from from :event event-v})))
 
+(defn wrap-handlers
+  "Wraps a map of handlers with one or more middlewares"
+  ([handler-map middleware & middlewares]
+   (let [kv-pairs (seq handler-map)
+         wrapped-map (into {} (map (fn [[k v]] [k (middleware v)]) kv-pairs))]
+     (if (empty? middlewares)
+       wrapped-map
+       (apply wrap-handlers wrapped-map (first middlewares) (rest middlewares))))))
+
 ;; -------- transmitter ----------------------------------------------------------------------
 
 (defn dispatch
