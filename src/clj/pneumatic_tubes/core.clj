@@ -9,19 +9,23 @@
 (def ^:private tube-registry (atom {:tubes    {}
                                     :send-fns {}}))
 
-(defn- assoc-tube-data
-  "Associate data with the tube on server side, this data can be used to select particular tubes for sending data"
-  [registry tube-id new-data]
+(defn- next-tube-data [current-data new-data]
   (if (map? new-data)
-    (assoc-in registry [:tubes tube-id] (merge {:tube/id tube-id} new-data))
-    (do
-      (error "pneumatic-tubes: Expected map containing new tube data, but got " new-data " . Tube data was not changed")
+    (assoc new-data :tube/id (:tube/id current-data))
+    current-data))
+
+(defn- update-tube-data
+  [registry tube-id new-data]
+  (let [current-data (get-in registry [:tubes tube-id])]
+    (if current-data
+      (assoc-in registry [:tubes tube-id] (next-tube-data current-data new-data))
       registry)))
 
 (defn- add-tube [registry tube-id send-fn initial-data]
   (-> registry
-      (assoc-tube-data tube-id initial-data)
-      (assoc-in [:send-fns tube-id] send-fn)))
+      (assoc-in [:tubes tube-id] {:tube/id tube-id})
+      (assoc-in [:send-fns tube-id] send-fn)
+      (update-tube-data tube-id initial-data)))
 
 (defn- rm-tube [registry tube-id]
   (-> registry
@@ -51,12 +55,12 @@
      (swap! tube-registry #(add-tube % tube-id send-fn client-data))
      tube-id)))
 
-(defn assoc-tube-data!
+(defn update-tube-data!
   "Associates the some data with the tube.
   This is like putting a sticker with a label on a tube,
   so that you can select the tube by label to send messages to particular destination"
   [tube-id new-data]
-  (swap! tube-registry #(assoc-tube-data % tube-id new-data)))
+  (swap! tube-registry #(update-tube-data % tube-id new-data)))
 
 (defn get-tube [id]
   "Returns current tube data from rergistry"
@@ -87,7 +91,7 @@
     (if (nil? handler-fn)
       (error "pneumatic-tubes: no event handler registered for: \"" event-id "\". Ignoring.")
       (try
-        (assoc-tube-data! tube-id (handler-fn from event-v))
+        (update-tube-data! tube-id (handler-fn from event-v))
         (catch Exception e (error "pneumatic-tubes: Exception while processing event:"
                                   event-v "received from tube" from e))))))
 
@@ -107,11 +111,6 @@
          (handle-incoming this event)
          (recur (<! in-queue))))
      this)))
-
-(defn receive-sync
-  "Synchroinously process the incoming event"
-  ([receiver from event-v]
-   (handle-incoming receiver {:from from :event event-v})))
 
 (defn receive
   "Asynchronously process the incoming event"
@@ -161,7 +160,9 @@
                :send-listeners on-send}]
      (go-loop [event (<! out-queue)]
        (when event
-         (handle-outgoing @tube-registry event)
-         (call-listeners on-send event)
+         (try
+           (handle-outgoing @tube-registry event)
+           (call-listeners on-send event)
+           (catch Exception e (error "pneumatic-tubes: Exception while transmitting event:" event e)))
          (recur (<! out-queue))))
      this)))

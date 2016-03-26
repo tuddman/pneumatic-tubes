@@ -1,5 +1,6 @@
-(ns pneumatic-tubes.httpkit (:use pneumatic-tubes.core
-                                  org.httpkit.server))
+(ns pneumatic-tubes.httpkit
+  (:use pneumatic-tubes.core
+        org.httpkit.server))
 
 (defn- send-fn [ch]
   (fn [data]
@@ -16,8 +17,9 @@
        request ch
        (let [tube-id (add-tube! (send-fn ch) tube-data)]
          (on-close ch (fn [_]
-                             (receive-sync receiver (get-tube tube-id) [:tube/on-destroy])
-                             (rm-tube! tube-id)))
+                        (let [destroyed-tube (get-tube tube-id)]
+                          (rm-tube! tube-id)
+                          (receive receiver destroyed-tube [:tube/on-destroy]))))
          (on-receive ch (fn [message]
-                               (receive receiver (get-tube tube-id) (read-string message))))
+                          (receive receiver (get-tube tube-id) (read-string message))))
          (receive receiver (get-tube tube-id) [:tube/on-create]))))))
