@@ -7,6 +7,7 @@
         [pneumatic-tubes.httpkit :only [websocket-handler]]))
 
 (def tx (transmitter))
+(def dispatch-to (partial dispatch tx))
 
 (def numbers (atom {}))
 
@@ -14,12 +15,12 @@
   (/ (apply + numbers) (count numbers)))
 
 (defn- update-number! [client-id num]
-  (let [nums (swap! numbers assoc client-id num)]
-    (dispatch tx :all [:average-changed (average (vals nums))])))
+       (let [nums (swap! numbers assoc client-id num)]
+            (dispatch-to :all [:average-changed (average (vals nums))])))
 
 (defn- remove-number! [client-id]
-  (let [nums (swap! numbers dissoc client-id)]
-    (dispatch tx :all [:average-changed (average (vals nums))])))
+       (let [nums (swap! numbers dissoc client-id)]
+            (dispatch-to :all [:average-changed (average (vals nums))])))
 
 (def rx (receiver
           {:tube/on-create
