@@ -36,10 +36,10 @@
 (defn- find-tubes-by-criteria [registry criteria]
   (let [all-tubes (vals (:tubes registry))]
     (if (= criteria :all)
-      all-tubes)
-    (if (fn? criteria)
-      (filter criteria all-tubes)
-      (find-tubes-by-criteria registry (criteria-by-tube-id criteria)))))
+      all-tubes
+      (if (fn? criteria)
+        (filter criteria all-tubes)
+        (find-tubes-by-criteria registry (criteria-by-tube-id criteria))))))
 
 (defn add-tube!
   "Registers a new tube in a global registry,
@@ -133,7 +133,7 @@
   "Send event vector to one or more tubes.
   Destination (parameter 'to') can be a map, a predicate function or :all keyword "
   ([transmitter to event-v]
-   (let [target-tube-ids (map :tube/id (find-tubes-by-criteria tube-registry to))]
+   (let [target-tube-ids (map :tube/id (find-tubes-by-criteria @tube-registry to))]
      (>!! (:out-queue transmitter) {:to target-tube-ids :event event-v})) to))
 
 (defn- send-to-tube [tube-registry tube-id event-v]
