@@ -28,6 +28,19 @@
       (update :tubes dissoc tube-id)
       (update :send-fns dissoc tube-id)))
 
+(defn- criteria-by-tube-id [id]
+  (fn [tube]
+    (or (= (:tube/id tube) id)
+        (= (:tube/id tube) (:tube/id id)))))
+
+(defn- find-tubes-by-criteria [registry criteria]
+  (let [all-tubes (vals (:tubes registry))]
+    (if (= criteria :all)
+      all-tubes)
+    (if (fn? criteria)
+      (filter criteria all-tubes)
+      (find-tubes-by-criteria registry (criteria-by-tube-id criteria)))))
+
 (defn add-tube!
   "Registers a new tube in a global registry,
   the send-fn is a function which sends a message via implementation-specific channel like a WebSocket"
@@ -48,6 +61,10 @@
 (defn get-tube [id]
   "Returns current tube data from rergistry"
   (get-in @tube-registry [:tubes id]))
+
+(defn find-tubes [criteria]
+  "Returns current tube data from rergistry"
+  (find-tubes-by-criteria @tube-registry criteria))
 
 (defn rm-tube!
   "Removes tube from the registry"
@@ -116,27 +133,17 @@
   "Send event vector to one or more tubes.
   Destination (parameter 'to') can be a map, a predicate function or :all keyword "
   ([transmitter to event-v]
-   (>!! (:out-queue transmitter) {:to to :event event-v}) to))
+   (let [target-tube-ids (map :tube/id (find-tubes-by-criteria tube-registry to))]
+     (>!! (:out-queue transmitter) {:to target-tube-ids :event event-v})) to))
 
 (defn- send-to-tube [tube-registry tube-id event-v]
   (let [send! (get-in tube-registry [:send-fns tube-id])]
     (send! (str event-v))))
 
-(defn- resolve-target-tube-ids [clients crit]
-  (let [all-clients (vals clients)]
-    (if (= crit :all)
-      (map :tube/id all-clients)
-      (if (fn? crit)
-        (map :tube/id (filter crit all-clients))
-        (if-let [tube-id (:tube/id crit)]
-          [tube-id]
-          [])))))
-
 (defn- handle-outgoing
-  [tube-registry {to :to event-v :event}]
-  (let [tube-ids (resolve-target-tube-ids (:tubes tube-registry) to)]
-    (doseq [tube-id tube-ids]
-      (send-to-tube tube-registry tube-id event-v))))
+  [tube-registry {tube-ids :to event-v :event}]
+  (doseq [tube-id tube-ids]
+    (send-to-tube tube-registry tube-id event-v)))
 
 (defn- call-listeners [on-send {to :to event-v :event}]
   (when on-send
