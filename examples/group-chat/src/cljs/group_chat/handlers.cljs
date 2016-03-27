@@ -7,7 +7,14 @@
   (.log js/console "received from server:" (str event-v))
   (re-frame/dispatch event-v))
 
-(def tube (tubes/tube (str "ws://localhost:3449/chat") on-receive))
+(defn on-disconnect []
+      (re-frame/dispatch [:backend-connected false]))
+
+(defn on-connect []
+      (.log js/console "Connection with server lost.")
+      (re-frame/dispatch [:backend-connected true]))
+
+(def tube (tubes/tube (str "ws://localhost:3449/chat") on-receive on-connect on-disconnect))
 (def send-to-server (tubes/send-to-tube-middleware tube))
 
 (re-frame/register-handler
@@ -39,3 +46,8 @@
   :new-messages
   (fn [db [_ messages]]
     (update-in db [:chat-room :messages] into (map (fn [m] [(:db/id m) m]) messages))))
+
+(re-frame/register-handler
+  :backend-connected
+  (fn [db [_ state]]
+      (assoc db :backend-connected state)))

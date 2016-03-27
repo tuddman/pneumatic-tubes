@@ -1,5 +1,6 @@
 (ns group-chat.db)
 
 (def default-db
-  {:name ""
-   :chat-room nil})
+  {:name              ""
+   :chat-room         nil
+   :backend-connected false})

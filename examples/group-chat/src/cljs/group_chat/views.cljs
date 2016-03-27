@@ -18,19 +18,24 @@
          {:class    (when (or (empty? @name) (empty? @chat-room)) "disabled")
           :on-click #(re-frame/dispatch [:enter-chat-room @name @chat-room])} "Enter"]]])))
 
-(defn message-input []
-  (let [text (atom "")]
-    (fn []
-    [:div.input-group
+(defn message-input [_]
+      (let [text (atom "")]
+           (fn [backend-connected]
+               [:div.input-group
      [:input.form-control {:type "text" :placeholder "Enter Message"
                            :value @text
                            :on-change #(reset! text (-> % .-target .-value))}]
      [:span.input-group-btn
       [:button.btn.btn-info {:type     "button"
-                             :class (when (empty? @text) "disabled")
+                             :class    (when (or (empty? @text) (not backend-connected)) "disabled")
                              :on-click #(do
                                          (re-frame/dispatch [:post-message @text])
                                          (reset! text ""))} "SEND"]]])))
+
+(defn message-input-component []
+      (let [backend-connected (re-frame/subscribe [:backend-connected])]
+           (fn []
+               [message-input @backend-connected])))
 
 (defn chat-view [name users messages]
   [:div.container
@@ -53,7 +58,7 @@
              [:br]
              [:small.text-muted author (str " | " at)]]]]])]]
      [:div.panel-footer
-      [message-input]]]
+      [message-input-component]]]
     [:div.col-md-4
      [:div.panel.panel-primary
       [:div.panel-heading "ONLINE USERS"]

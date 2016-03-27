@@ -8,6 +8,11 @@
     (reaction (:name @db))))
 
 (re-frame/register-sub
+  :backend-connected
+  (fn [db]
+      (reaction (:backend-connected @db))))
+
+(re-frame/register-sub
   :chat-room/name
   (fn [db]
     (reaction (get-in @db [:chat-room :name]))))
