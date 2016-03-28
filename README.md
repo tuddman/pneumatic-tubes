@@ -168,6 +168,22 @@ To destroy the tube at any time call:
 ```
 Event `:tube/on-destroy` will be published on server.
 
+#### Connection error handling
+By default tube will try to reconnect to server using default backoff strategy
+which is random number of milliseconds with linearly growing max limit.
+
+To react on the loss of connection you can pass `on-connect` and `on-diconnect` hooks of tube:
+```clojure
+(defn on-disconnect []
+      (.log js/console "Connection with server lost.")
+      (re-frame/dispatch [:disable-some-features]))
+
+(defn on-connect []
+      (re-frame/dispatch [:enable-some-features]))
+
+(def tube (tubes/tube url on-receive on-connect on-disconnect))
+```
+
 #### Dispatching events to server
 To dispatch event at any point use:
 ```clojure
