@@ -10,9 +10,13 @@
 (defn error [& msg] (.error js/console (apply str msg)))
 (defn warn [& msg] (.warn js/console (apply str msg)))
 
+(defn increasing-random-timeout [min-timout]
+  (fn [retries] (rand (max (* retries 1000) min-timout))))
+
 (def default-config
-  {:web-socket-impl js/WebSocket
-   :out-queue-size  10})
+  {:web-socket-impl  js/WebSocket
+   :out-queue-size   10
+   :backoff-strategy (increasing-random-timeout 5000)})
 (defn- noop [])
 
 (defn tube
@@ -33,20 +37,32 @@
 (defn- tube-id [tube-spec]
   (:url tube-spec))
 
-(defn- get-tube-instance [tube-spec]
-  (get @instances (tube-id tube-spec)))
+(defn- get-tube-instance
+  ([tube-spec]
+   (get-tube-instance @instances tube-spec))
+  ([all-instances tube-spec]
+   (get all-instances (tube-id tube-spec))))
 
-(defn- new-tube-instance! [tube-spec socket out-queue]
-  (swap! instances assoc (tube-id tube-spec)
-         {:socket    socket
-          :out-queue out-queue
-          :destroyed false}))
+(defn- init-tube-instance!
+  "Creates new instance if not exist or updates existing"
+  [tube-spec socket out-queue]
+  (swap! instances
+         #(let [inst (get-tube-instance % tube-spec)]
+           (assoc % (tube-id tube-spec)
+                    {:socket    socket
+                     :out-queue out-queue
+                     :retries   (if inst (inc (:retries inst)) 0)
+                     :connected false
+                     :destroyed (if inst (:destroyed inst) false)}))))
 
 (defn- rm-tube-instance! [tube-spec]
   (swap! instances dissoc (tube-id tube-spec)))
 
 (defn- mark-tube-destroyed! [tube-spec]
   (swap! instances assoc-in [(tube-id tube-spec) :destroyed] true))
+
+(defn- mark-tube-connected! [tube-spec]
+  (swap! instances assoc-in [(tube-id tube-spec) :connected] true))
 
 (defn dispatch [tube event-v]
   "Sends the event to some tube"
@@ -68,28 +84,35 @@
    (create! tube nil))
   ([tube params]
    (let [param-str (str/join "&" (for [[k v] params] (str (name k) "=" v)))
-         {base-url :url rcv-fn :on-receive config :config} tube
-         {:keys [on-disconnect on-connect]} tube
-         ws-impl (:web-socket-impl config)
-         url (if (empty? param-str) base-url (str base-url "?" param-str))]
+         base-url (:url tube)
+         {:keys [on-receive on-disconnect on-connect config]} tube
+         {ws-impl :web-socket-impl queue-size :out-queue-size backoff :backoff-strategy} config
+         url (if (empty? param-str) base-url (str base-url "?" param-str))
+         out-queue (chan queue-size)]
      (if-let [socket (ws-impl. url)]
-       (let [out-queue (chan (:out-queue-size config))]
+       (do
          (set! (.-onopen socket) #(do
+                                   (log "Created tube on " url)
+                                   (mark-tube-connected! tube)
                                    (start-send-loop socket out-queue)
                                    (on-connect)))
-         (set! (.-onerror socket) #(error "WebSocket error!"))
-         (set! (.-onclose socket) #(let [instance (get-tube-instance tube)]
-                                    (close! (:out-queue instance))
-                                    (rm-tube-instance! tube)
-                                    (if (:destroyed instance)
-                                      (log "Destroyed tune on " url)
-                                      (on-disconnect))))
+         (set! (.-onclose socket) #(let [instance (get-tube-instance tube)
+                                         {:keys [out-queue retries connected destroyed]} instance]
+                                    (close! out-queue)
+                                    (when connected
+                                      (on-disconnect))
+                                    (if destroyed
+                                      (do
+                                        (rm-tube-instance! tube)
+                                        (log "Destroyed tube on " url)))
+                                    (js/setTimeout (fn []
+                                                     (log "Reconnect " retries " : " url)
+                                                     (create! tube params)) (backoff retries))))
          (set! (.-onmessage socket)
                #(let [event-v (-> % .-data reader/read-string)]
-                 (rcv-fn event-v)))
-         (new-tube-instance! tube socket out-queue)
-         (log "Created tube on " url))
-       (throw (js/Error. "WebSocket connection failed. url: " url))))))
+                 (on-receive event-v)))
+         (init-tube-instance! tube socket out-queue))
+       (error "WebSocket connection failed. url: " url)))))
 
 (defn destroy! [tube]
   "Destroys tube. On server this will trigger :tube/on-destroy event."
