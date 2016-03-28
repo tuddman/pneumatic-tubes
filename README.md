@@ -3,6 +3,7 @@
 WebSocket based transport of events between re-frame app and server
 
 [![Clojars Project](https://img.shields.io/clojars/v/pneumatic-tubes.svg)](https://clojars.org/pneumatic-tubes)
+[![Build Status](https://travis-ci.org/drapanjanas/pneumatic-tubes.svg?branch=master)](https://travis-ci.org/drapanjanas/pneumatic-tubes)
 
 ## Why
 
