@@ -32,7 +32,7 @@
     :on-receive    on-receive
     :on-disconnect on-disconnect
     :on-connect    on-connect
-    :config        config}))
+    :config        (merge default-config config)}))
 
 (defn- tube-id [tube-spec]
   (:url tube-spec))
