@@ -2,6 +2,8 @@
 
 WebSocket based transport of events between re-frame app and server
 
+[![Clojars Project](https://img.shields.io/clojars/v/pneumatic-tubes.svg)](https://clojars.org/pneumatic-tubes)
+
 ## Why
 
 While it is quite easy to [talk to servers](https://github.com/Day8/re-frame/wiki/Talking-To-Servers)
