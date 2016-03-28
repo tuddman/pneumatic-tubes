@@ -90,14 +90,17 @@ It takes more parameters than dispatch in re-rfame mainly because you need to sp
 Destination is specified in 2nd parameter, you can use:
 
 1. keyword :all to send event to all connected clients
+
     ```clojure
     (dispatch transmitter :all [:my-event with params])
     ```
 1. a map containing entry key :tube/id, to dispatch to a single tube
+
     ```clojure
     (dispatch transmitter soruce-tube [:my-event with params])
     ```
 1. a predicate function of 'label' data which will be used as filtering criteria for target tubes
+
     ```clojure
     (dispatch transmitter #(= (:some-prop %) "value") [:my-event with params])
     ```
