@@ -32,9 +32,9 @@ on it and then select tubes using is labels for dispatching events to clients.
 (def rx                         ;; collection of handlers for processing incoming messages
   (receiver
     {:say-hello                 ;; re-frame event name
-     (fn [from [_ name]]        ;; re-frame event handler function
+     (fn [tube [_ name]]        ;; re-frame event handler function
        (println "Hello" name)
-       (dispatch tx from [:say-hello-processed])  ;; send event to same 'tube' where :say-hello came from
+       (dispatch tx tube [:say-hello-processed])  ;; send event to same 'tube' where :say-hello came from
        from)}))
 
 (def handler (websocket-handler rx))   ;; kttp-kit based WebSocket request handler
@@ -45,18 +45,40 @@ on it and then select tubes using is labels for dispatching events to clients.
 #### Server side event handler
 The event handler on server has same signature as in re-frame app.
 ```clojure
-(fn [source-tube [event-name param1 param2 ....]]
+(fn [source-tube [event-name param1 param2 ...]]
 
     (event-handling-logic)
 
-    (-> source-tube
-        (assoc :my-label "value")))
+    (assoc source-tube :my-label "value")))
 ```
 The important difference is that instead of app-db you are getting a data map associated with
 the source tube of the event. This data is something like a 'label' placed on the 'tube'.
 Event handler must return the new data from the event, it will be associated with the tube.
 
 This 'label' data intended to be used for filtering tubes when you dispatching events to multiple clients.
+
+#### Wrapping handlers with middleware
+You can share some cross-cutting logic with handlers using custom middleware.
+
+Middleware is function which returns a handler decorated with some additional logic.
+
+Lets say you want to print all received events:
+```clojure
+(:require [pneumatic-tubes.core :as tubes]])
+
+(def handlers {...})                                                     ;; initial handlers
+
+(defn trace-middleware [handler]
+  (fn [tube event-v]
+    (println "Received event" event-v "from" tube)
+    (handler tube event-v)))                                             ;; call wrapped handler
+
+(defn wrapped-handlers (tubes/wrap-handlers handlers trace-middleware))  ;; decorated handlers
+
+(def rx (receiver wrapped-handlers))                                     ;; pass handlers to receiver
+```
+For more interesting example have a look at Datomic transaction middleware in
+[Group chat example app](https://github.com/drapanjanas/pneumatic-tubes/blob/9c24f4de046977af9614201d84770569e95b0622/examples/group-chat/src/clj/group_chat/core.clj#L14-L23)
 
 #### Dispatching server events to clients
 In your server side code you can dispatch (push) events to your client apps using `dispatch` function.
@@ -68,8 +90,17 @@ It takes more parameters than dispatch in re-rfame mainly because you need to sp
 Destination is specified in 2nd parameter, you can use:
 
 1. keyword :all to send event to all connected clients
-1. a map containing entry key :tube/id (like 1st param of event handler), to dispatch to a single tube
+    ```clojure
+    (dispatch transmitter :all [:my-event with params])
+    ```
+1. a map containing entry key :tube/id, to dispatch to a single tube
+    ```clojure
+    (dispatch transmitter soruce-tube [:my-event with params])
+    ```
 1. a predicate function of 'label' data which will be used as filtering criteria for target tubes
+    ```clojure
+    (dispatch transmitter #(= (:some-prop %) "value") [:my-event with params])
+    ```
 
 #### Purpose of transmitter
 The intention of having more transmitter is to be able implementing some clustering strategy of your choice.
