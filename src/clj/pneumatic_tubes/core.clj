@@ -60,7 +60,8 @@
   This is like putting a sticker with a label on a tube,
   so that you can select the tube by label to send messages to particular destination"
   [tube-id new-data]
-  (swap! tube-registry #(update-tube-data % tube-id new-data)))
+  (swap! tube-registry #(update-tube-data % tube-id new-data))
+  tube-id)
 
 (defn get-tube [id]
   "Returns current tube data from rergistry"
@@ -74,7 +75,7 @@
   "Removes tube from the registry"
   [tube-id]
   (swap! tube-registry #(rm-tube % tube-id))
-  nil)
+  tube-id)
 
 
 ;; -------- receiver ----------------------------------------------------------------------
