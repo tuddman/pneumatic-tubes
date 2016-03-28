@@ -151,10 +151,14 @@ In case you want just forward some re-frame app event to server you can use a mi
 ```
 The same event will be sent to server right after the re-frame handler is finished.
 
+## Examples
+* [Average number](https://github.com/drapanjanas/pneumatic-tubes/tree/master/examples/average-number) -
+very basic usage example
+* [Group chat](https://github.com/drapanjanas/pneumatic-tubes/tree/master/examples/group-chat) -
+more complex example which uses most of the features of pneumatic-tubes also demonstrates Datomic usage.
+
 ## What to do next
 * Add tests
-* More complex example with dispaching using predicate fn
-* Error handling, reconnecting
 * Example with some clustering solution
 
 ## License
