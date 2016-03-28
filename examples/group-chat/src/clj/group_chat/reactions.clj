@@ -18,7 +18,8 @@
 
 (defn push-current-chat-messages [room-name tube db]
   (let [messages (db/fetch-chat-messages db room-name)]
-    (dispatch-to tube [:new-messages messages])))
+       (dispatch-to tube [:clean-messages])
+       (dispatch-to tube [:new-messages messages])))
 
 (defn push-new-chat-messages [txn]
   (let [chat-room-msgs (db/extract-new-chat-messages-from-txn txn)]
