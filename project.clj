@@ -7,6 +7,8 @@
                  [org.clojure/clojurescript "1.7.170"]
                  [org.clojure/tools.logging "0.2.3"]
                  [org.clojure/core.async "0.2.374"]
+                 [com.cognitect/transit-cljs "0.8.237"]
+                 [com.cognitect/transit-clj "0.8.285"]
                  [http-kit "2.1.18"]]
 
   :min-lein-version "2.5.3"

@@ -1,10 +1,13 @@
 (ns pneumatic-tubes.core
   (:require-macros [cljs.core.async.macros :refer [go-loop]])
   (:require [cljs.core.async :refer [close! chan <! put!]]
-            [cljs.reader :as reader]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [cognitect.transit :as t]))
 
 (def ^:private instances (atom {}))
+
+(def r (t/reader :json))
+(def w (t/writer :json))
 
 (defn log [& msg] (.log js/console (apply str msg)))
 (defn error [& msg] (.error js/console (apply str msg)))
@@ -68,14 +71,14 @@
   "Sends the event to some tube"
   (let [ch (:out-queue (get-tube-instance tube))]
     (if ch
-      (put! ch (str event-v))
+      (put! ch event-v)
       (throw (js/Error. (str "Tube for " (:url tube) " is not started!"))))))
 
 (defn- start-send-loop [socket out-queue]
   (go-loop
     [event (<! out-queue)]
     (when event
-      (.send socket (str event))
+      (.send socket (t/write w event))
       (recur (<! out-queue)))))
 
 (defn create!
@@ -109,7 +112,7 @@
                                                      (log "Reconnect " retries " : " url)
                                                      (create! tube params)) (backoff retries))))
          (set! (.-onmessage socket)
-               #(let [event-v (-> % .-data reader/read-string)]
+               #(let [event-v (t/read r (-> % .-data))]
                  (on-receive event-v)))
          (init-tube-instance! tube socket out-queue))
        (error "WebSocket connection failed. url: " url)))))

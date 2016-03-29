@@ -1,8 +1,7 @@
 (ns pneumatic-tubes.core
   (:use [clojure.tools.logging :only [info warn error]]
         [clojure.set])
-  (:require [clojure.core.async
-             :refer [>! <! >!! <!! go go-loop chan]]))
+  (:require [clojure.core.async :refer [<! >!! go-loop chan]]))
 
 ;; -------- tube-registry-------------------------------------------------------------------
 
@@ -138,7 +137,7 @@
 
 (defn- send-to-tube [tube-registry tube-id event-v]
   (let [send! (get-in tube-registry [:send-fns tube-id])]
-    (send! (str event-v))))
+    (send! event-v)))
 
 (defn- handle-outgoing
   [tube-registry {tube-ids :to event-v :event}]
