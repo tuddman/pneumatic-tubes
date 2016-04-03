@@ -1,0 +1,3 @@
+rootProject.name = 'GroupChatApp'
+
+include ':app'
