@@ -107,10 +107,10 @@
                                     (if destroyed
                                       (do
                                         (rm-tube-instance! tube)
-                                        (log "Destroyed tube on " url)))
-                                    (js/setTimeout (fn []
-                                                     (log "Reconnect " retries " : " url)
-                                                     (create! tube params)) (backoff retries))))
+                                        (log "Destroyed tube on " url))
+                                      (js/setTimeout (fn []
+                                                       (log "Reconnect " retries " : " url)
+                                                       (create! tube params)) (backoff retries)))))
          (set! (.-onmessage socket)
                #(let [event-v (t/read r (-> % .-data))]
                  (on-receive event-v)))
