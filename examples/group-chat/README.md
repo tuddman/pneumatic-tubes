@@ -25,3 +25,12 @@ Wait a bit, then browse to [http://localhost:3449](http://localhost:3449).
 lein clean
 lein cljsbuild once min
 ```
+
+## Run standalone jar
+
+```
+lein clean
+lein uberjar
+java -Dport=3000 -jar target/group-chat-standalone.jar
+```
+Then browse to [http://localhost:3000](http://localhost:3000).

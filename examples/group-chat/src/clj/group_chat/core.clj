@@ -2,6 +2,7 @@
   (:use org.httpkit.server)
   (:require [clojure.tools.logging :as log]
             [compojure.core :refer [GET POST defroutes routes]]
+            [compojure.route :refer [resources not-found]]
             [compojure.handler :refer [api]]
             [ring.util.response :refer [file-response]]
             [ring.middleware.defaults :refer [wrap-defaults]]
@@ -60,7 +61,10 @@
 
 (defroutes handler
            (GET "/" [] (file-response "index.html" {:root "resources/public"}))
-           (GET "/chat" [name room] (websocket-handler rx {:name name :chat-room-name room})))
+           (GET "/chat" [name room] (websocket-handler rx {:name name :chat-room-name room}))
+           (resources "/")
+           (not-found "Not Found"))
+
 
 (def app (wrap-defaults handler {:params {:urlencoded true
                                           :keywordize true}}))

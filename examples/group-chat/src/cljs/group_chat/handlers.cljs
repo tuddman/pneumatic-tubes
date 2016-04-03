@@ -8,13 +8,13 @@
   (re-frame/dispatch event-v))
 
 (defn on-disconnect []
-      (.log js/console "Connection with server lost.")
-      (re-frame/dispatch [:backend-connected false]))
+  (.log js/console "Connection with server lost.")
+  (re-frame/dispatch [:backend-connected false]))
 
 (defn on-connect []
-      (re-frame/dispatch [:backend-connected true]))
-
-(def tube (tubes/tube (str "ws://localhost:3449/chat") on-receive on-connect on-disconnect))
+  (re-frame/dispatch [:backend-connected true]))
+(def host (.-host js/location))
+(def tube (tubes/tube (str "ws://" host "/chat") on-receive on-connect on-disconnect))
 (def send-to-server (tubes/send-to-tube-middleware tube))
 
 (re-frame/register-handler
@@ -45,7 +45,7 @@
 (re-frame/register-handler
   :clean-messages
   (fn [db _]
-      (assoc-in db [:chat-room :messages] {})))
+    (assoc-in db [:chat-room :messages] {})))
 
 (re-frame/register-handler
   :new-messages
@@ -55,4 +55,4 @@
 (re-frame/register-handler
   :backend-connected
   (fn [db [_ state]]
-      (assoc db :backend-connected state)))
+    (assoc db :backend-connected state)))

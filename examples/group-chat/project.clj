@@ -7,6 +7,7 @@
                  [ring "1.4.0"]
                  [ring/ring-defaults "0.2.0"]
                  [pneumatic-tubes "0.1.0-SNAPSHOT"]
+                 [environ "1.0.2"]
                  [ch.qos.logback/logback-classic "1.1.1"]
                  [com.datomic/datomic-free "0.9.5350" :exclusions [org.slf4j/slf4j-nop joda-time org.slf4j/slf4j-log4j12]]]
 
@@ -17,24 +18,31 @@
   :plugins [[lein-cljsbuild "1.1.3"]
             [lein-figwheel "0.5.0-6"]]
 
+  :main group-chat.server
+
+  :uberjar-name "group-chat-standalone.jar"
+
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :figwheel {:css-dirs ["resources/public/css"]
+  :figwheel {:css-dirs     ["resources/public/css"]
              :ring-handler group-chat.core/app}
 
-  :cljsbuild {:builds [{:id "dev"
+  :cljsbuild {:builds [{:id           "dev"
                         :source-paths ["src/cljs"]
-                        :figwheel {:on-jsload "group-chat.core/mount-root"}
-                        :compiler {:main group-chat.core
-                                   :output-to "resources/public/js/compiled/app.js"
-                                   :output-dir "resources/public/js/compiled/out"
-                                   :asset-path "js/compiled/out"
-                                   :source-map-timestamp true}}
+                        :figwheel     {:on-jsload "group-chat.core/mount-root"}
+                        :compiler     {:main                 group-chat.core
+                                       :output-to            "resources/public/js/compiled/app.js"
+                                       :output-dir           "resources/public/js/compiled/out"
+                                       :asset-path           "js/compiled/out"
+                                       :source-map-timestamp true}}
 
-                       {:id "min"
+                       {:id           "min"
                         :source-paths ["src/cljs"]
-                        :compiler {:main group-chat.core
-                                   :output-to "resources/public/js/compiled/app.js"
-                                   :optimizations :advanced
-                                   :closure-defines {goog.DEBUG false}
-                                   :pretty-print false}}]})
+                        :compiler     {:main            group-chat.core
+                                       :output-to       "resources/public/js/compiled/app.js"
+                                       :optimizations   :advanced
+                                       :closure-defines {goog.DEBUG false}
+                                       :pretty-print    false}}]}
+
+  :profiles {:uberjar {:prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+                       :aot        :all}})
