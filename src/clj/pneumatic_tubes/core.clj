@@ -85,15 +85,15 @@
 
 (defn- handle-incoming
   [receiver {from :from event-v :event}]
-  (let [event-id (first event-v)
-        tube-id (:tube/id from)
-        handler-fn (lookup-handler receiver event-id)]
-    (if (nil? handler-fn)
-      (error "pneumatic-tubes: no event handler registered for: \"" event-id "\". Ignoring.")
-      (try
-        (update-tube-data! tube-id (handler-fn from event-v))
-        (catch Exception e (error "pneumatic-tubes: Exception while processing event:"
-                                  event-v "received from tube" from e))))))
+  (try
+    (let [event-id (first event-v)
+          tube-id (:tube/id from)
+          handler-fn (lookup-handler receiver event-id)]
+      (if (nil? handler-fn)
+        (error "pneumatic-tubes: no event handler registered for: \"" event-id "\". Ignoring.")
+        (update-tube-data! tube-id (handler-fn from event-v))))
+    (catch Throwable e (error "pneumatic-tubes: Exception while processing event:"
+                              event-v "received from tube" from e))))
 
 (defn- noop-handler [tube _] tube)
 (def ^:private noop-handlers {:tube/on-create  noop-handler
