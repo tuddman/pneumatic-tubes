@@ -7,14 +7,19 @@
   (.log js/console "received from server:" (str event-v))
   (re-frame/dispatch event-v))
 
-(defn on-disconnect []
-  (.log js/console "Connection with server lost.")
-  (re-frame/dispatch [:backend-connected false]))
+(defn on-disconnect [code]
+      (.log js/console "Connection with server lost. code:" code)
+      (re-frame/dispatch [:backend-connected false]))
+
+(defn on-connect-failed [code]
+      (.log js/console "Connection attemt failed. code: " code))
 
 (defn on-connect []
-  (re-frame/dispatch [:backend-connected true]))
+      (.log js/console "Connected to server.")
+      (re-frame/dispatch [:backend-connected true]))
+
 (def host (.-host js/location))
-(def tube (tubes/tube (str "ws://" host "/chat") on-receive on-connect on-disconnect))
+(def tube (tubes/tube (str "ws://" host "/chat") on-receive on-connect on-disconnect on-connect-failed))
 (def send-to-server (tubes/send-to-tube-middleware tube))
 
 (re-frame/register-handler

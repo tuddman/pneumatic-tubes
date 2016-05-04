@@ -23,19 +23,26 @@
 (defn- noop [])
 
 (defn tube
-  "Creates the spec of a tube."
+  "Creates the spec of a tube. Parameters:
+    url: web socket connection url.
+    on-receive: function to process received events, takes event as parameter
+    on-connect: function will be called when connection is successfully established
+    on-disconnect: function will be called when connection lost or tube is destroyed by user, acceps code as parameter
+    on-connect-failed: function will be called when attempt to connect to server failed, accepts code as paremeter
+    config: optional configuration for the tube, see default-config"
   ([url on-receive]
-   (tube url on-receive noop noop default-config))
+   (tube url on-receive noop noop noop default-config))
   ([url on-receive config]
-   (tube url on-receive noop noop config))
-  ([url on-receive on-connect on-disconnect]
-   (tube url on-receive on-connect on-disconnect default-config))
-  ([url on-receive on-connect on-disconnect config]
-   {:url           url
-    :on-receive    on-receive
-    :on-disconnect on-disconnect
-    :on-connect    on-connect
-    :config        (merge default-config config)}))
+   (tube url on-receive noop noop noop config))
+  ([url on-receive on-connect on-disconnect on-connect-failed]
+   (tube url on-receive on-connect on-disconnect on-connect-failed default-config))
+  ([url on-receive on-connect on-disconnect on-connect-failed config]
+   {:url               url
+    :on-receive        on-receive
+    :on-disconnect     on-disconnect
+    :on-connect        on-connect
+    :on-connect-failed on-connect-failed
+    :config            (merge default-config config)}))
 
 (defn- tube-id [tube-spec]
   (:url tube-spec))
@@ -88,7 +95,7 @@
   ([tube params]
    (let [param-str (str/join "&" (for [[k v] params] (str (name k) "=" v)))
          base-url (:url tube)
-         {:keys [on-receive on-disconnect on-connect config]} tube
+         {:keys [on-receive on-disconnect on-connect on-connect-failed config]} tube
          {ws-impl :web-socket-impl queue-size :out-queue-size backoff :backoff-strategy} config
          url (if (empty? param-str) base-url (str base-url "?" param-str))
          out-queue (chan queue-size)]
@@ -102,8 +109,9 @@
          (set! (.-onclose socket) #(let [instance (get-tube-instance tube)
                                          {:keys [out-queue retries connected destroyed]} instance]
                                     (close! out-queue)
-                                    (when connected
-                                      (on-disconnect))
+                                    (if connected
+                                      (on-disconnect (.-code %))
+                                      (on-connect-failed (.-code %)))
                                     (if destroyed
                                       (do
                                         (rm-tube-instance! tube)
