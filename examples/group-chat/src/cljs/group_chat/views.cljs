@@ -1,41 +1,44 @@
 (ns group-chat.views
   (:require
     [reagent.ratom :refer [atom]]
-    [re-frame.core :as re-frame]))
+    [re-frame.core :refer [dispatch subscribe]]))
 
 (defn login-view []
   (let [name (atom "")
         chat-room (atom "")]
     (fn []
-      [:div.container
-       [:div.form-signin
-        [:h2.form-signin-heading "Enter Chat Room"]
-        [:input#input-nickname.form-control {:type      "text" :placeholder "Enter your nickname" :value @name
-                                             :on-change #(reset! name (-> % .-target .-value))}]
-        [:input#input-chatroom.form-control {:type      "text" :placeholder "Enter room name" :value @chat-room
-                                             :on-change #(reset! chat-room (-> % .-target .-value))}]
-        [:button.btn.btn-lg.btn-primary.btn-block
-         {:class    (when (or (empty? @name) (empty? @chat-room)) "disabled")
-          :on-click #(re-frame/dispatch [:enter-chat-room @name @chat-room])} "Enter"]]])))
+      (let [enter-disabled? (or (empty? @name) (empty? @chat-room))]
+        [:div.container
+         [:div.form-signin
+          [:h2.form-signin-heading "Enter Chat Room"]
+          [:input.form-control {:type      "text" :placeholder "Enter your nickname" :value @name
+                                :on-change #(reset! name (-> % .-target .-value))}]
+          [:input.form-control {:type      "text" :placeholder "Enter room name" :value @chat-room
+                                :on-change #(reset! chat-room (-> % .-target .-value))}]
+          [:button.btn.btn-lg.btn-primary.btn-block
+           {:class    (when enter-disabled? "disabled")
+            :on-click #(dispatch [:enter-chat-room @name @chat-room])} "Enter"]]]))))
 
-(defn message-input [_]
-      (let [text (atom "")]
-           (fn [backend-connected]
-               [:div.input-group
-     [:input.form-control {:type "text" :placeholder "Enter Message"
-                           :value @text
-                           :on-change #(reset! text (-> % .-target .-value))}]
-     [:span.input-group-btn
-      [:button.btn.btn-info {:type     "button"
-                             :class    (when (or (empty? @text) (not backend-connected)) "disabled")
-                             :on-click #(do
-                                         (re-frame/dispatch [:post-message @text])
-                                         (reset! text ""))} "SEND"]]])))
+(defn message-input-inner [{:keys [value enabled? on-change on-submit]}]
+  [:div.input-group
+   [:input.form-control {:type      "text" :placeholder "Enter Message"
+                         :value     value
+                         :on-change on-change}]
+   [:span.input-group-btn
+    [:button.btn.btn-info {:type     "button"
+                           :class    (when (or (empty? value) (not enabled?)) "disabled")
+                           :on-click on-submit} "SEND"]]])
 
-(defn message-input-component []
-      (let [backend-connected (re-frame/subscribe [:backend-connected])]
-           (fn []
-               [message-input @backend-connected])))
+(defn message-input []
+  (let [text (atom "")
+        backend-connected? (subscribe [:backend-connected])]
+    (fn []
+      [message-input-inner {:value     @text
+                            :enabled?  @backend-connected?
+                            :on-change #(reset! text (-> % .-target .-value))
+                            :on-submit #(do
+                                         (dispatch [:post-message @text])
+                                         (reset! text ""))}])))
 
 (defn chat-view [name users messages]
   [:div.container
@@ -58,7 +61,7 @@
              [:br]
              [:small.text-muted author (str " | " at)]]]]])]]
      [:div.panel-footer
-      [message-input-component]]]
+      [message-input]]]
     [:div.col-md-4
      [:div.panel.panel-primary
       [:div.panel-heading "ONLINE USERS"]
@@ -75,9 +78,9 @@
               [:h5 user]]]]])]]]]]])
 
 (defn main-panel []
-  (let [room-name (re-frame/subscribe [:chat-room/name])
-        users-online (re-frame/subscribe [:chat-room/users])
-        messages (re-frame/subscribe [:chat-room/messages])]
+  (let [room-name (subscribe [:chat-room/name])
+        users-online (subscribe [:chat-room/users])
+        messages (subscribe [:chat-room/messages])]
     (fn []
       (if @room-name
         [chat-view @room-name @users-online @messages]
