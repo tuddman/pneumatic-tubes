@@ -8,7 +8,7 @@
                  [reagent "0.5.1" :exclusions [cljsjs/react]]
                  [re-frame "0.6.0"]
                  [prismatic/schema "1.0.4"]
-                 [pneumatic-tubes "0.1.0-SNAPSHOT"]]
+                 [pneumatic-tubes "0.1.0"]]
   :plugins [[lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-6"]]
   :clean-targets ["target/" "index.ios.js" "index.android.js"]

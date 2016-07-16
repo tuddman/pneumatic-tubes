@@ -6,7 +6,7 @@
                  [compojure "1.4.0"]
                  [ring "1.4.0"]
                  [ring/ring-defaults "0.2.0"]
-                 [pneumatic-tubes "0.1.0-SNAPSHOT"]
+                 [pneumatic-tubes "0.1.0"]
                  [environ "1.0.2"]
                  [ch.qos.logback/logback-classic "1.1.1"]
                  [com.datomic/datomic-free "0.9.5350" :exclusions [org.slf4j/slf4j-nop joda-time org.slf4j/slf4j-log4j12]]]

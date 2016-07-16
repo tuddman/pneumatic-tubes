@@ -5,7 +5,7 @@
                  [re-frame "0.6.0"]
                  [compojure "1.4.0"]
                  [ring "1.4.0"]
-                 [pneumatic-tubes "0.1.0-SNAPSHOT"]]
+                 [pneumatic-tubes "0.1.0"]]
 
   :min-lein-version "2.5.3"
 
