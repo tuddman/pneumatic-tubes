@@ -9,7 +9,8 @@
   (.log js/console "received from server:" (str event-v))
   (re-frame/dispatch event-v))
 
-(def tube (tubes/tube (str "ws://localhost:3449/ws") on-receive))
+(def host (.-host js/document.location))
+(def tube (tubes/tube (str "ws://" host "/ws") on-receive))
 (def send-to-server (tubes/send-to-tube-middleware tube))
 
 (re-frame/register-handler
