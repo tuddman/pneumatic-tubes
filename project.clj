@@ -11,6 +11,9 @@
                  [com.cognitect/transit-clj "0.8.285"]
                  [http-kit "2.1.18"]]
 
+  :scm {:name "git"
+        :url  "https://github.com/drapanjanas/pneumatic-tubes"}
+
   :min-lein-version "2.5.3"
   :source-paths ["src/clj"]
   :plugins [[lein-cljsbuild "1.1.2"]]
