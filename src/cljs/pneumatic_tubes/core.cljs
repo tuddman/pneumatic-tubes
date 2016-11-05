@@ -130,11 +130,3 @@
   (let [socket (:socket (get-tube-instance tube))]
     (mark-tube-destroyed! tube)
     (.close socket)))
-
-(defn send-to-tube-middleware [tube]
-  "Middleware to send an event to server 'as-is'"
-  (fn [handler]
-    (fn [db v]
-      (let [new-db (handler db v)]
-        (dispatch tube v)
-        new-db))))

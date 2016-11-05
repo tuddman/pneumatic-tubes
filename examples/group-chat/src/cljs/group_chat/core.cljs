@@ -1,7 +1,7 @@
 (ns group-chat.core
     (:require [reagent.core :as reagent]
               [re-frame.core :as re-frame]
-              [group-chat.handlers]
+              [group-chat.events]
               [group-chat.subs]
               [group-chat.views :as views]
               [group-chat.config :as config]))

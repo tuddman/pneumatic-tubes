@@ -1,13 +1,13 @@
 (ns average-number.subs
-    (:require-macros [reagent.ratom :refer [reaction]])
-    (:require [re-frame.core :as re-frame]))
+  (:require-macros [reagent.ratom :refer [reaction]])
+  (:require [re-frame.core :refer [reg-sub]]))
 
-(re-frame/register-sub
- :my-number
- (fn [db]
-   (reaction (:my-number @db))))
+(reg-sub
+  :my-number
+  (fn [db]
+      (:my-number db)))
 
-(re-frame/register-sub
+(reg-sub
   :average
   (fn [db]
-    (reaction (:avg @db))))
+      (:avg db)))

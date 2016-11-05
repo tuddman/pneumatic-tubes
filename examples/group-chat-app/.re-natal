@@ -1,11 +1,15 @@
 {
   "name": "GroupChatApp",
-  "interface": "reagent",
+  "interface": "reagent6",
   "androidHost": "localhost",
   "iosHost": "localhost",
-  "modules": [
-    "react-native-button"
-  ],
+  "envRoots": {
+    "dev": "env/dev",
+    "prod": "env/prod"
+  },
+   "modules": [
+     "react-native-button"
+   ],
   "imageDirs": [
     "images"
   ]

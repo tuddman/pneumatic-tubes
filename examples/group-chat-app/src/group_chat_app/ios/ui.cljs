@@ -3,26 +3,26 @@
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [group-chat-app.ios.styles :as s]))
 
-(def React (js/require "react-native"))
+(def ReactNative (js/require "react-native"))
 
-(def text (r/adapt-react-class (.-Text React)))
-(def button (r/adapt-react-class (js/require "react-native-button")))
-(def text-input (r/adapt-react-class (.-TextInput React)))
-(def view (r/adapt-react-class (.-View React)))
-(def tab-bar (r/adapt-react-class (.-TabBarIOS React)))
-(def tab-bar-item (r/adapt-react-class (.-TabBarIOS.Item React)))
-(def image (r/adapt-react-class (.-Image React)))
+(def text (r/adapt-react-class (.-Text ReactNative)))
+(def button (r/adapt-react-class (.-default (js/require "react-native-button"))))
+(def text-input (r/adapt-react-class (.-TextInput ReactNative)))
+(def view (r/adapt-react-class (.-View ReactNative)))
+(def tab-bar (r/adapt-react-class (.-TabBarIOS ReactNative)))
+(def tab-bar-item (r/adapt-react-class (.-TabBarIOS.Item ReactNative)))
+(def image (r/adapt-react-class (.-Image ReactNative)))
 
 (defn alert [title]
-  (.alert (.-Alert React) title))
+      (.alert (.-Alert ReactNative) title))
 
 (def unknown-user (js/require "./images/user.png"))
 
 (defn login-view []
   (let [name (atom "")
         chat-room (atom "")]
-    (fn []
-      [view {:style s/view}
+       (fn login-view-render []
+           [view {:style s/view}
        [text {:style s/headng} "Enter chat room"]
        [text-input {:style          s/input
                     :placeholder    "Your name"
@@ -57,8 +57,8 @@
 
 (defn message-list-component []
   (let [messages (subscribe [:chat-room/messages])]
-    (fn []
-      [message-list @messages])))
+       (fn message-list-component-render []
+           [message-list @messages])))
 
 (defn user-list [users]
   [view {:style s/chat-view}
@@ -70,8 +70,8 @@
 
 (defn user-list-component []
   (let [users (subscribe [:chat-room/users])]
-    (fn []
-      [user-list @users])))
+       (fn user-list-render []
+           [user-list @users])))
 
 (defn chat-view [active-tab]
   [tab-bar
@@ -94,7 +94,7 @@
   (let [room-name (subscribe [:chat-room/name])
         users-online (subscribe [:chat-room/users])
         active-tab (subscribe [:active-tab])]
-    (fn []
-      (if @room-name
+       (fn main-view-render []
+           (if @room-name
         [chat-view @active-tab @room-name @users-online]
         [login-view]))))

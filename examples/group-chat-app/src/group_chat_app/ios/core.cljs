@@ -2,11 +2,11 @@
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [group-chat-app.ios.ui :as ui]
-            [group-chat-app.handlers]
+            [group-chat-app.events]
             [group-chat-app.subs]))
 
-(set! js/window.React (js/require "react-native"))
-(def app-registry (.-AppRegistry js/React))
+(def ReactNative (js/require "react-native"))
+(def app-registry (.-AppRegistry ReactNative))
 
 (def app-root ui/main-view)
 

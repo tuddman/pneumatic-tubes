@@ -2,7 +2,7 @@
 
 An example of using pneumatic-tubes in React Native application
 
-## Runing the example
+## Running the example
 
 1. Install re-natal `npm -g i re-natal`
 1. Install NPM dependencies `re-natal deps`

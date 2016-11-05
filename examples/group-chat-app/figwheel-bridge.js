@@ -13,7 +13,8 @@ var config = {
     serverPort: 8081
 };
 
-var React = require('react-native');
+var React = require('react');
+var ReactNative = require('react-native');
 var WebSocket = require('WebSocket');
 var self;
 var scriptQueue = [];
@@ -42,13 +43,13 @@ var figwheelApp = function (platform, devHost) {
             if (!this.state.loaded) {
                 var plainStyle = {flex: 1, alignItems: 'center', justifyContent: 'center'};
                 return (
-                    < React.View
+                    < ReactNative.View
                 style = {plainStyle} >
-                    < React.Text > Waiting
+                    < ReactNative.Text > Waiting
                 for Figwheel to
                 load
-                files. < / React.Text >
-                < / React.View >
+                files. < / ReactNative.Text >
+                < / ReactNative.View >
             )
                 ;
             }
@@ -84,7 +85,6 @@ function customEval(url, javascript, success, error) {
                 });
                 success();
             } catch (e) {
-                console.error('Evaluation error in: ' + url);
                 console.error(e);
                 error();
             }
@@ -114,7 +114,6 @@ function asyncImportScripts(url, success, error) {
             return customEval(url, responseText, success, error);
         })
         .catch(function (error) {
-            console.error('Error loading script, please check your config setup.');
             console.error(error);
             return error();
         });
@@ -129,6 +128,7 @@ function syncImportScripts(url, success, error) {
         });
         success();
     } catch (e) {
+        console.error(e);
         error()
     }
 }
@@ -169,11 +169,23 @@ function interceptRequire() {
 function compileWarningsToYellowBox() {
     var log = window.console.log;
     var compileWarningRx = /Figwheel: Compile/;
+    var compileExceptionRx = /Figwheel: Compile Exception/;
+    var errorInFileRx = /Error on file/;
+    var isBuffering = false;
+    var compileExceptionBuffer = "";
     window.console.log = function (msg) {
-        if (compileWarningRx.test(msg)) {
+        log.apply(window.console, arguments);
+        if (compileExceptionRx.test(msg)) { // enter buffering mode to get all the messages for exception
+            isBuffering = true;
+            compileExceptionBuffer = msg + "\n";
+        } else if (errorInFileRx.test(msg) && isBuffering) { // exit buffering mode and log buffered messages to YellowBox
+            isBuffering = false;
+            console.warn(compileExceptionBuffer + msg);
+            compileExceptionBuffer = "";
+        } else if (isBuffering) { //log messages buffering mode
+            compileExceptionBuffer += msg + "\n";
+        } else if (compileWarningRx.test(msg)) {
             console.warn(msg);
-        } else {
-            log.apply(window.console, arguments);
         }
     };
 }
@@ -213,14 +225,14 @@ function loadApp(platform, devHost, onLoadCb) {
                 // seriously React packager? why.
                 var googreq = goog.require;
 
-                googreq('figwheel.connect');
+                googreq('figwheel.connect.' + platform);
             });
         });
     }
 }
 
 function startApp(appName, platform, devHost) {
-    React.AppRegistry.registerComponent(
+    ReactNative.AppRegistry.registerComponent(
         appName, () = > figwheelApp(platform, devHost)
 )
     ;

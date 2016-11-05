@@ -1,33 +1,33 @@
-(ns group-chat.handlers
-  (:require [re-frame.core :as re-frame]
+(ns group-chat.events
+  (:require [re-frame.core :refer [reg-event-db dispatch after]]
             [group-chat.db :as db]
             [pneumatic-tubes.core :as tubes]))
 
 (defn on-receive [event-v]
-  (.log js/console "received from server:" (str event-v))
-  (re-frame/dispatch event-v))
+      (.log js/console "received from server:" (str event-v))
+      (dispatch event-v))
 
 (defn on-disconnect [code]
       (.log js/console "Connection with server lost. code:" code)
-      (re-frame/dispatch [:backend-connected false]))
+      (dispatch [:backend-connected false]))
 
 (defn on-connect-failed [code]
       (.log js/console "Connection attemt failed. code: " code))
 
 (defn on-connect []
       (.log js/console "Connected to server.")
-      (re-frame/dispatch [:backend-connected true]))
+      (dispatch [:backend-connected true]))
 
 (def host (.-host js/location))
 (def tube (tubes/tube (str "ws://" host "/chat") on-receive on-connect on-disconnect on-connect-failed))
-(def send-to-server (tubes/send-to-tube-middleware tube))
+(def send-to-server (after (fn [_ v] (tubes/dispatch tube v))))
 
-(re-frame/register-handler
+(reg-event-db
   :initialize-db
   (fn [_ _]
     db/default-db))
 
-(re-frame/register-handler
+(reg-event-db
   :enter-chat-room
   (fn [db [_ name room]]
     (tubes/create! tube {:name name :room room})
@@ -37,27 +37,27 @@
                            :users    []
                            :messages {}}))))
 
-(re-frame/register-handler
+(reg-event-db
   :post-message
   send-to-server
   (fn [db _] db))
 
-(re-frame/register-handler
+(reg-event-db
   :users-online-changed
   (fn [db [_ names]]
     (assoc-in db [:chat-room :users] (-> names distinct sort vec))))
 
-(re-frame/register-handler
+(reg-event-db
   :clean-messages
   (fn [db _]
     (assoc-in db [:chat-room :messages] {})))
 
-(re-frame/register-handler
+(reg-event-db
   :new-messages
   (fn [db [_ messages]]
     (update-in db [:chat-room :messages] into (map (fn [m] [(:db/id m) m]) messages))))
 
-(re-frame/register-handler
+(reg-event-db
   :backend-connected
   (fn [db [_ state]]
     (assoc db :backend-connected state)))

@@ -1,21 +1,21 @@
 (ns group-chat-app.android.core
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
-            [group-chat-app.handlers]
+            [group-chat-app.events]
             [group-chat-app.subs]))
 
-(set! js/window.React (js/require "react-native"))
+(def ReactNative (js/require "react-native"))
 
-(def app-registry (.-AppRegistry js/React))
-(def text (r/adapt-react-class (.-Text js/React)))
-(def view (r/adapt-react-class (.-View js/React)))
-(def image (r/adapt-react-class (.-Image js/React)))
-(def touchable-highlight (r/adapt-react-class (.-TouchableHighlight js/React)))
+(def app-registry (.-AppRegistry ReactNative))
+(def text (r/adapt-react-class (.-Text ReactNative)))
+(def view (r/adapt-react-class (.-View ReactNative)))
+(def image (r/adapt-react-class (.-Image ReactNative)))
+(def touchable-highlight (r/adapt-react-class (.-TouchableHighlight ReactNative)))
 
 (def logo-img (js/require "./images/cljs.png"))
 
 (defn alert [title]
-  (.alert (.-Alert js/React) title))
+      (.alert (.-Alert ReactNative) title))
 
 (defn app-root []
   (let [greeting (subscribe [:get-greeting])]
@@ -29,5 +29,5 @@
         [text {:style {:color "white" :text-align "center" :font-weight "bold"}} "press me"]]])))
 
 (defn init []
-  (dispatch-sync [:initialize-db])
-  (.registerComponent app-registry "GroupChatApp" #(r/reactify-component app-root)))
+      (dispatch-sync [:initialize-db])
+      (.registerComponent app-registry "GroupChatApp" #(r/reactify-component app-root)))

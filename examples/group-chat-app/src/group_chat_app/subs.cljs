@@ -1,34 +1,32 @@
 (ns group-chat-app.subs
-  (:require-macros [reagent.ratom :refer [reaction]])
-  (:require [re-frame.core :refer [register-sub]]))
+  (:require [re-frame.core :refer [reg-sub]]))
 
-(register-sub
+(reg-sub
   :name
   (fn [db]
-    (reaction (:name @db))))
+      (:name db)))
 
-(register-sub
+(reg-sub
   :active-tab
   (fn [db]
-    (reaction (:active-tab @db))))
+      (:active-tab db)))
 
-(register-sub
+(reg-sub
   :backend-connected
   (fn [db]
-    (reaction (:backend-connected @db))))
+      (:backend-connected db)))
 
-(register-sub
+(reg-sub
   :chat-room/name
   (fn [db]
-    (reaction (get-in @db [:chat-room :name]))))
+      (get-in db [:chat-room :name])))
 
-(register-sub
+(reg-sub
   :chat-room/users
   (fn [db]
-    (reaction (get-in @db [:chat-room :users]))))
+      (get-in db [:chat-room :users])))
 
-(register-sub
+(reg-sub
   :chat-room/messages
   (fn [db]
-    (reaction
-      (sort-by :chat-message/at (vals (get-in @db [:chat-room :messages]))))))
+      (sort-by :chat-message/at (vals (get-in db [:chat-room :messages])))))

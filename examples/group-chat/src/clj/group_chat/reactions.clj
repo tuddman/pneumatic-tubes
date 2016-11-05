@@ -1,9 +1,9 @@
 (ns group-chat.reactions
-  (:require [clojure.tools.logging :as log]
+    (:require [clojure.tools.logging :as log]
             [pneumatic-tubes.core :refer [transmitter dispatch find-tubes]]
             [group-chat.datomic :as db :refer [conn]]
             [datomic.api :as d]
-            [clojure.core.async :refer [go-loop]]))
+      [clojure.core.async :refer [go-loop thread]]))
 
 (def tx (transmitter #(log/info "Dispatching " %2 "to" %1)))
 
@@ -28,8 +28,11 @@
                    [:new-messages [msg]]))))
 
 (def tx-queue (d/tx-report-queue conn))
-
-(go-loop [txn (.take tx-queue)]
-  (when txn
-    (push-new-chat-messages txn)
-    (recur (.take tx-queue))))
+(thread
+  (while true
+         (let [txn (.take tx-queue)]
+              (try
+                (when (:tx-data txn)
+                      (push-new-chat-messages txn))
+                (catch Exception e
+                  (log/error e "There was an error diring processing of datomic transaction"))))))
