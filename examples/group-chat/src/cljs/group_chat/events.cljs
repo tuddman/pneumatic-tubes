@@ -4,19 +4,19 @@
             [pneumatic-tubes.core :as tubes]))
 
 (defn on-receive [event-v]
-      (.log js/console "received from server:" (str event-v))
-      (dispatch event-v))
+  (.log js/console "received from server:" (str event-v))
+  (dispatch event-v))
 
 (defn on-disconnect [code]
-      (.log js/console "Connection with server lost. code:" code)
-      (dispatch [:backend-connected false]))
+  (.log js/console "Connection with server lost. code:" code)
+  (dispatch [:backend-connected false]))
 
 (defn on-connect-failed [code]
-      (.log js/console "Connection attemt failed. code: " code))
+  (.log js/console "Connection attemt failed. code: " code))
 
 (defn on-connect []
-      (.log js/console "Connected to server.")
-      (dispatch [:backend-connected true]))
+  (.log js/console "Connected to server.")
+  (dispatch [:backend-connected true]))
 
 (def host (.-host js/location))
 (def tube (tubes/tube (str "ws://" host "/chat") on-receive on-connect on-disconnect on-connect-failed))

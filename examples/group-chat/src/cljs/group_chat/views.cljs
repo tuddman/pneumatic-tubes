@@ -37,8 +37,8 @@
                             :enabled?  @backend-connected?
                             :on-change #(reset! text (-> % .-target .-value))
                             :on-submit #(do
-                                         (dispatch [:post-message @text])
-                                         (reset! text ""))}])))
+                                          (dispatch [:post-message @text])
+                                          (reset! text ""))}])))
 
 (defn chat-view [name users messages]
   [:div.container

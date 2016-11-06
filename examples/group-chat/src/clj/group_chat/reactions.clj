@@ -1,9 +1,9 @@
 (ns group-chat.reactions
-    (:require [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
             [pneumatic-tubes.core :refer [transmitter dispatch find-tubes]]
             [group-chat.datomic :as db :refer [conn]]
             [datomic.api :as d]
-      [clojure.core.async :refer [go-loop thread]]))
+            [clojure.core.async :refer [go-loop thread]]))
 
 (def tx (transmitter #(log/info "Dispatching " %2 "to" %1)))
 
@@ -18,8 +18,8 @@
 
 (defn push-current-chat-messages [room-name tube db]
   (let [messages (db/fetch-chat-messages db room-name)]
-       (dispatch-to tube [:clean-messages])
-       (dispatch-to tube [:new-messages messages])))
+    (dispatch-to tube [:clean-messages])
+    (dispatch-to tube [:new-messages messages])))
 
 (defn push-new-chat-messages [txn]
   (let [chat-room-msgs (db/extract-new-chat-messages-from-txn txn)]
@@ -30,9 +30,9 @@
 (def tx-queue (d/tx-report-queue conn))
 (thread
   (while true
-         (let [txn (.take tx-queue)]
-              (try
-                (when (:tx-data txn)
-                      (push-new-chat-messages txn))
-                (catch Exception e
-                  (log/error e "There was an error diring processing of datomic transaction"))))))
+    (let [txn (.take tx-queue)]
+      (try
+        (when (:tx-data txn)
+          (push-new-chat-messages txn))
+        (catch Exception e
+          (log/error e "There was an error diring processing of datomic transaction"))))))
