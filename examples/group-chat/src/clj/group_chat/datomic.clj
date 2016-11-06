@@ -38,10 +38,17 @@
     :db/cardinality        :db.cardinality/many
     :db.install/_attribute :db.part/db}])
 
+(def tx-attributes
+  [{:db/id                 #db/id [:db.part/db]
+    :db/ident              :action/name
+    :db/valueType          :db.type/string
+    :db/cardinality        :db.cardinality/one
+    :db.install/_attribute :db.part/db}])
+
 ;; init schema
 (d/transact
   conn
-  (vec (concat chat-room chat-message)))
+  (vec (concat chat-room chat-message tx-attributes)))
 
 (defn- find-and-pull [db find-fn pull-fn & args]
   (let [find (partial find-fn db)
@@ -79,6 +86,11 @@
            [?r ?a ?m _ true]
            [?a :db/ident :chat-room/messages]] db data)))
 
+(defn extract-action-name-from-txn [{db :db-after data :tx-data}]
+  (d/q '[:find ?v .
+         :in $ [[_ ?a ?v _ _]]
+         :where [?a :db/ident :action/name]] db data))
+
 ;; ----- transactions ------
 
 (defn new-message-txn [room-name author text]
@@ -88,4 +100,6 @@
     :chat-message/at     (new java.util.Date)}
    {:db/id              #db/id [:db.part/user]
     :chat-room/name     room-name
-    :chat-room/messages [#db/id[:db.part/user -1]]}])
+    :chat-room/messages [#db/id[:db.part/user -1]]}
+   {:db/id       #db/id[:db.part/tx]
+    :action/name "new-message"}])

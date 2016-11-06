@@ -21,7 +21,9 @@
     (dispatch-to tube [:clean-messages])
     (dispatch-to tube [:new-messages messages])))
 
-(defn push-new-chat-messages [txn]
+(defmulti on-transaction db/extract-action-name-from-txn)
+
+(defmethod on-transaction "new-message" [txn]
   (let [chat-room-msgs (db/extract-new-chat-messages-from-txn txn)]
     (doseq [[room msg] chat-room-msgs]
       (dispatch-to (users-in-room (:chat-room/name room))
@@ -33,6 +35,6 @@
     (let [txn (.take tx-queue)]
       (try
         (when (:tx-data txn)
-          (push-new-chat-messages txn))
+          (on-transaction txn))
         (catch Exception e
           (log/error e "There was an error diring processing of datomic transaction"))))))
