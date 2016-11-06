@@ -37,7 +37,7 @@
      (let [room-name (:chat-room-name tube)
            user-name (:name tube)]
        (r/push-users-online room-name)
-       (r/push-current-chat-messages room-name tube db)
+       (r/push-current-chat-messages db room-name tube)
        [tube (db/new-message-txn room-name "SYSTEM" (str "Joined: " user-name))]))
 
    :tube/on-destroy

@@ -16,7 +16,7 @@
         names-in-room (map :name (find-tubes all-in-room))]
     (dispatch-to all-in-room [:users-online-changed names-in-room])))
 
-(defn push-current-chat-messages [room-name tube db]
+(defn push-current-chat-messages [db room-name tube]
   (let [messages (db/fetch-chat-messages db room-name)]
     (dispatch-to tube [:clean-messages])
     (dispatch-to tube [:new-messages messages])))

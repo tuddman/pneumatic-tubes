@@ -43,28 +43,41 @@
   conn
   (vec (concat chat-room chat-message)))
 
+(defn- find-and-pull [db find-fn pull-fn & args]
+  (let [find (partial find-fn db)
+        pull (partial pull-fn db)]
+    (map pull (apply find args))))
+
 ;; ----- queries ------
 
-(def message-pull-expression '(pull ?m [:db/id
-                                        :chat-message/at
-                                        :chat-message/author
-                                        :chat-message/text]))
+(defn pull-chat-message [db id]
+  (d/pull db [:db/id
+              :chat-message/at
+              :chat-message/author
+              :chat-message/text] id))
+
+(defn find-chat-messages [db room-name]
+  (d/q '[:find [?m ...]
+         :in $ ?room-name
+         :where
+         [?r :chat-room/name ?room-name]
+         [?r :chat-room/messages ?m]] db room-name))
 
 (defn fetch-chat-messages [db room-name]
-  (d/q [:find [message-pull-expression '...]
-        :in '$ '?room-name
-        :where
-        ['?r :chat-room/name '?room-name]
-        ['?r :chat-room/messages '?m]] db room-name))
+  (find-and-pull db find-chat-messages pull-chat-message room-name))
 
 (defn extract-new-chat-messages-from-txn
   "Returns [[chat-room new-message]] for new messages created in Datomic transaction."
   [{db :db-after data :tx-data}]
-  (d/q [:find '(pull ?r [:chat-room/name]) message-pull-expression
-        :in '$ [['?r '?a '?m '_ '?added]]
-        :where
-        ['?r '?a '?m '_ true]
-        ['?a :db/ident :chat-room/messages]] db data))
+  (map
+    (fn [[room-id msg-id]]
+      [(d/pull db [:chat-room/name] room-id)
+       (pull-chat-message db msg-id)])
+    (d/q '[:find ?r ?m
+           :in $ [[?r ?a ?m _ ?added]]
+           :where
+           [?r ?a ?m _ true]
+           [?a :db/ident :chat-room/messages]] db data)))
 
 ;; ----- transactions ------
 

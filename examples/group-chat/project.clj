@@ -45,5 +45,8 @@
                                        :closure-defines {goog.DEBUG false}
                                        :pretty-print    false}}]}
 
-  :profiles {:uberjar {:prep-tasks ["compile" ["cljsbuild" "once" "min"]]
-                       :aot        :all}})
+  :profiles {:dev     {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                                      [figwheel-sidecar "0.5.8"]]}
+             :uberjar {:prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+                       :aot        :all}}
+  :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]})
