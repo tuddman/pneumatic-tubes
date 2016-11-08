@@ -14,6 +14,7 @@
             [group-chat.reactions :as r]))
 
 (def db-uri "datomic:mem://test-db")
+(def conn (db/ensure-db-conn db-uri))
 
 (defn datomic-transaction-mw [conn]
   (fn [handler]
@@ -57,7 +58,7 @@
 (def rx (receiver
           (wrap-handlers
             handlers
-            (datomic-transaction-mw (db/ensure-db-conn db-uri))
+            (datomic-transaction-mw conn)
             debug-middleware)))
 
 (defroutes handler
@@ -72,4 +73,4 @@
 
 (def app-with-reload (wrap-reload #'app))
 
-(r/react-on-transactions! (db/ensure-db-conn db-uri))
+(r/react-on-transactions! conn)
