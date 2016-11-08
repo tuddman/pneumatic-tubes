@@ -6,22 +6,23 @@
             [compojure.handler :refer [api]]
             [ring.util.response :refer [file-response]]
             [ring.middleware.defaults :refer [wrap-defaults]]
+            [ring.middleware.reload :refer [wrap-reload]]
             [pneumatic-tubes.core :refer [receiver wrap-handlers]]
             [pneumatic-tubes.httpkit :refer [websocket-handler]]
             [datomic.api :as d]
-            [group-chat.datomic :as db :refer [conn]]
+            [group-chat.datomic :as db]
             [group-chat.reactions :as r]))
 
-(defn datomic-transaction
-  "Middleware to apply a Datomic transaction.
-  The handler takes DB and is expected to return transaction data to be applied."
-  [handler]
-  (fn [tube event-v]
-    (let [[tube txn] (handler tube (d/db conn) event-v)]
-      (when txn
-        (log/debug "Executing Datomic transaction" txn)
-        (d/transact conn txn))
-      tube)))
+(def db-uri "datomic:mem://test-db")
+
+(defn datomic-transaction-mw [conn]
+  (fn [handler]
+    (fn [tube event-v]
+      (let [[tube txn] (handler tube (d/db conn) event-v)]
+        (when txn
+          (log/debug "Executing Datomic transaction" txn)
+          (d/transact conn txn))
+        tube))))
 
 (defn debug-middleware
   "Middleware to log incoming events"
@@ -56,7 +57,7 @@
 (def rx (receiver
           (wrap-handlers
             handlers
-            datomic-transaction
+            (datomic-transaction-mw (db/ensure-db-conn db-uri))
             debug-middleware)))
 
 (defroutes handler
@@ -68,3 +69,7 @@
 
 (def app (wrap-defaults handler {:params {:urlencoded true
                                           :keywordize true}}))
+
+(def app-with-reload (wrap-reload #'app))
+
+(r/react-on-transactions! (db/ensure-db-conn db-uri))

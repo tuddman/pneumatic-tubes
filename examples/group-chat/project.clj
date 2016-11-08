@@ -26,7 +26,7 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
   :figwheel {:css-dirs     ["resources/public/css"]
-             :ring-handler group-chat.core/app}
+             :ring-handler group-chat.core/app-with-reload}
 
   :cljsbuild {:builds [{:id           "dev"
                         :source-paths ["src/cljs"]

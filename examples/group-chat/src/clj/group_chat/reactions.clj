@@ -1,7 +1,7 @@
 (ns group-chat.reactions
   (:require [clojure.tools.logging :as log]
             [pneumatic-tubes.core :refer [transmitter dispatch find-tubes]]
-            [group-chat.datomic :as db :refer [conn]]
+            [group-chat.datomic :as db]
             [datomic.api :as d]
             [clojure.core.async :refer [go-loop thread]]))
 
@@ -29,12 +29,16 @@
       (dispatch-to (users-in-room (:chat-room/name room))
                    [:new-messages [msg]]))))
 
-(def tx-queue (d/tx-report-queue conn))
-(thread
-  (while true
-    (let [txn (.take tx-queue)]
-      (try
-        (when (:tx-data txn)
-          (on-transaction txn))
-        (catch Exception e
-          (log/error e "There was an error diring processing of datomic transaction"))))))
+(defmethod on-transaction :default [_])
+
+(defn react-on-transactions! [conn]
+  (let [tx-queue (d/tx-report-queue conn)]
+    (thread
+      (while true
+        (let [txn (.take tx-queue)]
+          (try
+            (when (:tx-data txn)
+              (on-transaction txn))
+            (catch Exception e
+              (log/error e "There was an error diring processing of datomic transaction"))))))))
+
