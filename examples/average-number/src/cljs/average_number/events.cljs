@@ -1,5 +1,5 @@
 (ns average-number.events
-  (:require [re-frame.core :refer [reg-event-db]]
+  (:require [re-frame.core :refer [reg-event-db dispatch after]]
             [pneumatic-tubes.core :as tubes]))
 
 (def default-db {:my-number 0
@@ -7,10 +7,10 @@
 
 (defn on-receive [event-v]
       (.log js/console "received from server:" (str event-v))
-      (re-frame/dispatch event-v))
+      (dispatch event-v))
 
 (def tube (tubes/tube (str "ws://localhost:3449/ws") on-receive))
-(def send-to-server (tubes/send-to-tube-middleware tube))
+(def send-to-server (after (fn [_ v] (tubes/dispatch tube v))))
 
 (reg-event-db
   :initialize-db
@@ -23,7 +23,7 @@
   (fn [db [_ num]]
       (assoc db :my-number num)))
 
-(rreg-event-db
+(reg-event-db
   :average-changed
   (fn [db [_ avg]]
       (assoc db :avg avg)))
