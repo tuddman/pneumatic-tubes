@@ -3,18 +3,18 @@
             :url "http://example.com/FIXME"
             :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
-            :dependencies [[org.clojure/clojure "1.9.0-alpha10"]
-                           [org.clojure/clojurescript "1.9.198"]
-                           [reagent "0.6.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]
-                           [re-frame "0.8.0"]
+            :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
+                           [org.clojure/clojurescript "1.9.521"]
+                           [reagent "0.6.1" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]
+                           [re-frame "0.9.2"]
                            [pneumatic-tubes "0.2.0-SNAPSHOT"]]
             :plugins [[lein-cljsbuild "1.1.4"]
-                      [lein-figwheel "0.5.8"]]
+                      [lein-figwheel "0.5.10"]]
             :clean-targets ["target/" "index.ios.js" "index.android.js"]
             :aliases {"prod-build" ^{:doc "Recompile code with prod profile."}
                          ["do" "clean"
                           ["with-profile" "prod" "cljsbuild" "once"]]}
-            :profiles {:dev  {:dependencies [[figwheel-sidecar "0.5.8"]
+            :profiles {:dev  {:dependencies [[figwheel-sidecar "0.5.10"]
                                    [com.cemerick/piggieback "0.2.1"]]
                               :source-paths ["src" "env/dev"]
                               :cljsbuild    {:builds [{:id           "ios"
@@ -39,6 +39,8 @@
                                                                    :output-dir         "target/ios"
                                                                    :static-fns         true
                                                                    :optimize-constants true
+                                                                   :language-in        :ecmascript5
+                                                                   :language-out       :ecmascript5
                                                                    :optimizations      :simple
                                                                    :closure-defines    {"goog.DEBUG" false}}}
                                                    {:id           "android"
@@ -48,5 +50,7 @@
                                                                    :output-dir         "target/android"
                                                                    :static-fns         true
                                                                    :optimize-constants true
+                                                                   :language-in        :ecmascript5
+                                                                   :language-out       :ecmascript5
                                                                    :optimizations      :simple
                                                                    :closure-defines    {"goog.DEBUG" false}}}]}}})
