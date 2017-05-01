@@ -43,15 +43,10 @@ var figwheelApp = function (platform, devHost) {
             if (!this.state.loaded) {
                 var plainStyle = {flex: 1, alignItems: 'center', justifyContent: 'center'};
                 return (
-                    < ReactNative.View
-                style = {plainStyle} >
-                    < ReactNative.Text > Waiting
-                for Figwheel to
-                load
-                files. < / ReactNative.Text >
-                < / ReactNative.View >
-            )
-                ;
+                    <ReactNative.View style={plainStyle}>
+                        <ReactNative.Text>Waiting for Figwheel to load files.</ReactNative.Text>
+                    </ReactNative.View>
+                );
             }
             return this.state.root;
         },
@@ -225,7 +220,7 @@ function loadApp(platform, devHost, onLoadCb) {
                 // seriously React packager? why.
                 var googreq = goog.require;
 
-                googreq('figwheel.connect.' + platform);
+                googreq('figwheel.connect.build_' + platform);
             });
         });
     }
@@ -233,9 +228,7 @@ function loadApp(platform, devHost, onLoadCb) {
 
 function startApp(appName, platform, devHost) {
     ReactNative.AppRegistry.registerComponent(
-        appName, () = > figwheelApp(platform, devHost)
-)
-    ;
+        appName, () => figwheelApp(platform, devHost));
 }
 
 function withModules(moduleById) {
