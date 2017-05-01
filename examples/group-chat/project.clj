@@ -1,34 +1,34 @@
 (defproject group-chat "0.1.0-SNAPSHOT"
-  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
-                 [org.clojure/clojurescript "1.9.293"]
-                 [reagent "0.6.0"]
-                 [re-frame "0.8.0"]
-                 [compojure "1.5.1"]
-                 [ring "1.5.0"]
+            :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
+                           [org.clojure/clojurescript "1.9.521"]
+                           [reagent "0.6.1"]
+                           [re-frame "0.9.2"]
+                           [compojure "1.5.2"]
+                           [ring "1.5.1"]
                  [ring/ring-defaults "0.2.1"]
-                 [pneumatic-tubes "0.2.0-SNAPSHOT"]
+                           [pneumatic-tubes "0.2.0"]
                  [http-kit "2.2.0"]
                  [environ "1.1.0"]
                  [ch.qos.logback/logback-classic "1.1.7"]
                  [com.datomic/datomic-free "0.9.5407" :exclusions [com.google.guava/guava org.slf4j/slf4j-nop joda-time org.slf4j/slf4j-log4j12]]]
 
-  :min-lein-version "2.5.3"
+            :min-lein-version "2.5.3"
 
-  :source-paths ["src/clj"]
+            :source-paths ["src/clj"]
 
-  :plugins [[lein-cljsbuild "1.1.4"]
-            [lein-figwheel "0.5.8"]]
+            :plugins [[lein-cljsbuild "1.1.4"]
+                      [lein-figwheel "0.5.10"]]
 
-  :main group-chat.server
+            :main group-chat.server
 
-  :uberjar-name "group-chat-standalone.jar"
+            :uberjar-name "group-chat-standalone.jar"
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
+            :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :figwheel {:css-dirs     ["resources/public/css"]
-             :ring-handler group-chat.core/app-with-reload}
+            :figwheel {:css-dirs ["resources/public/css"]
+             :ring-handler       group-chat.core/app-with-reload}
 
-  :cljsbuild {:builds [{:id           "dev"
+            :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/cljs"]
                         :figwheel     {:on-jsload "group-chat.core/mount-root"}
                         :compiler     {:main                 group-chat.core
@@ -45,8 +45,8 @@
                                        :closure-defines {goog.DEBUG false}
                                        :pretty-print    false}}]}
 
-  :profiles {:dev     {:dependencies [[com.cemerick/piggieback "0.2.1"]
-                                      [figwheel-sidecar "0.5.8"]]}
-             :uberjar {:prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+            :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
+                                            [figwheel-sidecar "0.5.10"]]}
+             :uberjar       {:prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :aot        :all}}
-  :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]})
+            :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]})
