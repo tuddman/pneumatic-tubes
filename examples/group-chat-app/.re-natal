@@ -7,9 +7,9 @@
     "dev": "env/dev",
     "prod": "env/prod"
   },
-   "modules": [
-     "react-native-button"
-   ],
+  "modules": [
+    "react-native-button"
+  ],
   "imageDirs": [
     "images"
   ]
