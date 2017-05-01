@@ -9,7 +9,7 @@ An example of using pneumatic-tubes in React Native application
 1. Run server app from group-chat example in separate terminal `java -Dport=3000 -jar target/group-chat-standalone.jar`
 1. Build and run React Native app:
     ```
-    $ lein perod biuld
+    $ lein prod-build
     $ react-native run-ios
 
     ```
