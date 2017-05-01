@@ -31,13 +31,14 @@ on it and then select tubes using is labels for dispatching events to clients.
           [pneumatic-tubes.httpkit :refer [websocket-handler]])
 
 (def tx (transmitter))          ;; responsible for transmitting messages to one or more clients
+(def dispatch-to (partial dispatch tx)) ;; helper function to dispatch using this transmitter 
 
 (def rx                         ;; collection of handlers for processing incoming messages
   (receiver
     {:say-hello                 ;; re-frame event name
      (fn [tube [_ name]]        ;; re-frame event handler function
        (println "Hello" name)
-       (dispatch tx tube [:say-hello-processed])  ;; send event to same 'tube' where :say-hello came from
+       (dispatch-to tube [:say-hello-processed])  ;; send event to same 'tube' where :say-hello came from
        from)}))
 
 (def handler (websocket-handler rx))   ;; kttp-kit based WebSocket request handler
@@ -46,7 +47,7 @@ on it and then select tubes using is labels for dispatching events to clients.
 (run-server handler {:port 9090})
 ```
 #### Server side event handler
-The event handler on server has same signature as in re-frame app.
+The event handler on server has similar signature as in re-frame app.
 ```clojure
 (fn [source-tube [event-name param1 param2 ...]]
 
@@ -116,7 +117,7 @@ Read more about that in Clustering section of this README
 ### Client
 
 ```clojure
-(:require [re-frame.core :as re-frame]
+(:require [re-frame.core :refer [reg-event-db dispatch after]]
           [pneumatic-tubes.core :as tubes]
 
 (defn on-receive [event-v]                                        ;; handler of incoming events from server
@@ -124,17 +125,17 @@ Read more about that in Clustering section of this README
   (re-frame/dispatch event-v))
 
 (def tube (tubes/tube (str "ws://localhost:9090/ws") on-receive)) ;; definition of event 'tube' over WebSocket
-(def send-to-server (tubes/send-to-tube-middleware tube))         ;; middleware to send event to server
+(def send-to-server (after (fn [_ v] (tubes/dispatch tube v))))   ;; middleware to send event to server
                                                                   ;; after it is processed on client
 
-(re-frame/register-handler                      ;; normal re-frame handler
+(reg-event-db                                   ;; normal re-frame handler
   :say-hello
   send-to-server                                ;; forwards this event also to server
   (fn [db [_ name]]
     (.log js/console (str "Hello " name))
     db))
 
-(re-frame/register-handler                      ;; will be called by server
+(reg-event-db                                   ;; will be called by server
   :say-hello-processed
   (fn [db _]
     (.log js/console "Yay!!!")
